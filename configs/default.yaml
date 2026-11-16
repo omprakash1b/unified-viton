@@ -1,0 +1,41 @@
+# Unified VTON — default configuration
+# Paths assume the VITON-HD layout (see README "Data layout").
+
+data:
+  root: D:/dataset
+  height: 512            # train at 512x384 first, then fine-tune at 1024x768
+  width: 384
+  num_body_kpts: 10      # KGI upper-body pose graph (10 joints)
+  num_garment_kpts: 32   # KGI garment graph (32 landmarks)
+  kpt_sigma: 6.0         # gaussian radius (px at 512 height) for keypoint heatmaps
+  # Optional: per-image SMPL visibility/depth (.npz with 'vis','depth' of shape [10]).
+  # If the folder is missing, visibility is derived from parsing (see data/vitonhd.py).
+  smpl_vis_dir: smpl-vis
+
+model:
+  sd_inpaint: stable-diffusion-v1-5/stable-diffusion-inpainting
+  clip_vision: openai/clip-vit-large-patch14
+  num_seg_classes: 8     # see data/vitonhd.py PARSE_GROUPS
+  num_garment_tokens: 16
+  num_skin_tokens: 4
+  prompt: "a photo of a person wearing a garment"
+
+stages:
+  kp:       {lr: 1.0e-4, batch: 64, epochs: 200}
+  seg:      {lr: 2.0e-4, batch: 2, epochs: 10, lambda_dice: 1.0, lambda_occ: 1.0}
+  warp:     {lr: 2.0e-4, batch: 3, epochs: 15, lambda_vgg: 0.2, lambda_tv: 2.0, lambda_2nd: 6.0, coarse_grad_scale: 0.1}
+  unet:     {lr: 1.0e-5, batch: 1,  epochs: 40, lambda_gp: 0.1, cond_drop: 0.1}
+  branches: {lr: 1.0e-5, batch: 1,  epochs: 20, lambda_gp: 0.1, cond_drop: 0.1}
+  decoder:  {lr: 1.0e-4, batch: 1,  epochs: 20, lambda_lpips: 1.0}
+
+train:
+  out_dir: ./checkpoints
+  num_workers: 4
+  mixed_precision: bf16   # H100: bf16; use fp16 on older GPUs
+  log_every: 50
+  save_every_epochs: 5
+  seed: 42
+
+infer:
+  steps: 30
+  guidance: 2.0

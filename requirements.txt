@@ -1,0 +1,13 @@
+# Install PyTorch first for your CUDA version: https://pytorch.org/get-started/locally/
+torch>=2.1
+torchvision>=0.16
+diffusers>=0.27
+transformers>=4.38
+accelerate>=0.27
+opencv-python
+pillow
+pyyaml
+tqdm
+scipy
+lpips
+torchmetrics[image]>=1.3
